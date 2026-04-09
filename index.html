@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPERATION RED THREAD — Complete Investigation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #0f0f1a;
+      --bg3: #141428;
+      --gold: #c9a84c;
+      --gold-dim: rgba(201,168,76,0.1);
+      --gold-border: rgba(201,168,76,0.28);
+      --accent: #e63946;
+      --accent-dim: rgba(230,57,70,0.1);
+      --green: #2ecc71;
+      --green-dim: rgba(46,204,113,0.1);
+      --green-border: rgba(46,204,113,0.35);
+      --yellow: #f39c12;
+      --yellow-dim: rgba(243,156,18,0.1);
+      --yellow-border: rgba(243,156,18,0.35);
+      --orange: #e67e22;
+      --orange-dim: rgba(230,126,34,0.1);
+      --orange-border: rgba(230,126,34,0.35);
+      --purple: #9b59b6;
+      --text: #d8d8e8;
+      --text-dim: #8888a0;
+      --border: rgba(255,255,255,0.07);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(10,10,15,0.96); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); padding: 0 24px;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 900; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; }
+    .nav-brand span { color: var(--text-dim); font-weight: 400; letter-spacing: 1px; font-size: 10px; margin-left: 12px; }
+    .nav-center { display: flex; align-items: center; gap: 6px; }
+    .nav-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 34px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .nav-btn:hover { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+    .slide-counter { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); min-width: 60px; text-align: center; }
+    .progress-bar { position: fixed; top: 56px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 999; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--accent)); width: 5.88%; transition: width 0.3s ease; }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; left: 0; top: 58px; bottom: 0; width: 170px; overflow-y: auto; background: var(--bg2); border-right: 1px solid var(--border); padding: 14px 8px; z-index: 100; scrollbar-width: thin; scrollbar-color: var(--gold-border) transparent; }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--gold-border); border-radius: 2px; }
+    .sidebar-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; padding-left: 4px; }
+    .thumb { width: 100%; aspect-ratio: 16/9; border-radius: 5px; margin-bottom: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative; overflow: hidden; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--gold); }
+    .thumb:hover { border-color: var(--gold-border); transform: scale(1.03); }
+    .thumb.active { border-color: var(--gold); box-shadow: 0 0 10px rgba(201,168,76,0.25); }
+    .thumb-title { font-size: 7.5px; color: var(--text-dim); text-align: center; line-height: 1.3; padding: 0 2px; margin-bottom: 6px; }
+
+    /* MAIN */
+    .main { margin-left: 170px; padding-top: 56px; }
+    .slide-section { min-height: 100vh; padding: 60px 48px 80px; max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .slide-section:last-child { padding-bottom: 120px; }
+
+    /* COVER */
+    .cover-slide { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 20px; background: radial-gradient(ellipse at 50% 40%, #0f0a1e 0%, #0a0a0f 70%); position: relative; padding: 60px 48px; }
+    .cover-corner { position: absolute; width: 70px; height: 70px; border-color: var(--gold-border); border-style: solid; opacity: 0.5; }
+    .cover-corner.tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
+    .cover-corner.tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
+    .cover-corner.bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
+    .cover-corner.br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
+    .cover-stamp { border: 2px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; padding: 5px 18px; border-radius: 3px; background: var(--accent-dim); }
+    .cover-title { font-family: 'Playfair Display', serif; font-size: clamp(40px, 7vw, 88px); font-weight: 900; color: #fff; line-height: 1.0; letter-spacing: -2px; }
+    .cover-title span { color: var(--gold); }
+    .cover-tagline { font-size: clamp(12px, 1.4vw, 15px); color: var(--text-dim); max-width: 500px; line-height: 1.7; }
+    .cover-divider { width: 120px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-border), transparent); }
+    .cover-stats { display: flex; gap: 32px; margin-top: 4px; }
+    .cover-stat { text-align: center; }
+    .cover-stat-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--gold); }
+    .cover-stat-label { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+    /* DIVIDER */
+    .divider-slide { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 20px; background: linear-gradient(135deg, var(--bg) 0%, #0f0a1e 100%); position: relative; }
+    .divider-slide::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.02) 40px, rgba(201,168,76,0.02) 41px); }
+    .divider-eyebrow { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); }
+    .divider-title { font-family: 'Playfair Display', serif; font-size: clamp(32px, 5vw, 64px); font-weight: 900; color: #fff; line-height: 1.1; letter-spacing: -1px; }
+    .divider-title span { color: var(--gold); }
+    .divider-sub { font-size: clamp(12px, 1.3vw, 15px); color: var(--text-dim); max-width: 500px; line-height: 1.7; }
+    .divider-divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+
+    /* TYPOGRAPHY */
+    .section-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+    .slide-title { font-family: 'Playfair Display', serif; font-size: clamp(20px, 2.8vw, 34px); font-weight: 900; color: #fff; line-height: 1.2; }
+    .slide-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+    .slide-num-badge { background: var(--gold-dim); border: 1px solid var(--gold-border); color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .thread-badge { background: var(--accent-dim); border: 1px solid rgba(230,57,70,0.3); color: var(--accent); font-size: 9px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* TIERS */
+    .tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-top: 6px; }
+    .tier-card { border-radius: 8px; padding: 12px 14px; border: 1px solid; }
+    .tier-a { background: var(--green-dim); border-color: var(--green-border); }
+    .tier-b { background: var(--yellow-dim); border-color: var(--yellow-border); }
+    .tier-c { background: var(--orange-dim); border-color: var(--orange-border); }
+    .tier-d { background: var(--accent-dim); border-color: rgba(230,57,70,0.28); }
+    .tier-x { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.14); }
+    .tier-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+    .tier-a .tier-label { color: var(--green); }
+    .tier-b .tier-label { color: var(--yellow); }
+    .tier-c .tier-label { color: var(--orange); }
+    .tier-d .tier-label { color: var(--accent); }
+    .tier-x .tier-label { color: #fff; }
+    .tier-desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
+
+    /* BLOCKS */
+    .content-block { background: #0d0d1a; border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; position: relative; overflow: hidden; }
+    .content-block::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+    .block-fact::before { background: var(--green); }
+    .block-contested::before { background: var(--yellow); }
+    .block-speculative::before { background: var(--orange); }
+    .block-confirmed::before { background: var(--accent); }
+    .block-forgery::before { background: #ff4444; }
+    .block-key::before { background: var(--gold); }
+    .block-section::before { background: var(--purple); }
+    .block-tag { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+    .block-fact .block-tag { color: var(--green); }
+    .block-contested .block-tag { color: var(--yellow); }
+    .block-speculative .block-tag { color: var(--orange); }
+    .block-confirmed .block-tag { color: var(--accent); }
+    .block-forgery .block-tag { color: #ff4444; }
+    .block-key .block-tag { color: var(--gold); }
+    .block-section .block-tag { color: var(--purple); }
+    .block-text { font-size: 12.5px; line-height: 1.7; color: var(--text); }
+    .block-text strong { color: #fff; }
+
+    /* PATTERN BOX */
+    .pattern-box { background: var(--gold-dim); border: 1px solid var(--gold-border); border-left: 4px solid var(--gold); border-radius: 8px; padding: 14px 18px; }
+    .pattern-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .pattern-text { font-size: 12.5px; color: var(--text); line-height: 1.65; }
+
+    /* FORGERY ALERT */
+    .forgery-alert { background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); border-radius: 8px; padding: 14px 18px; }
+    .forgery-alert-title { font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #ff4444; margin-bottom: 6px; }
+
+    /* SUB HEADER */
+    .sub-header { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin: 8px 0 6px; padding-bottom: 5px; border-bottom: 1px solid var(--gold-border); }
+
+    /* TWO COL */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .two-col-wide { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
+
+    /* VERDICT GRID */
+    .verdict-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
+    .verdict-card { background: #0d0d1a; border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .verdict-card-title { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .verdict-card-text { font-size: 11.5px; color: var(--text-dim); line-height: 1.6; }
+
+    /* FINAL SLIDE */
+    .final-slide { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 24px; background: linear-gradient(135deg, #0a0a0f, #0f0518); padding: 60px 48px; }
+    .final-stamp { border: 3px solid var(--accent); color: var(--accent); font-family: 'Playfair Display', serif; font-size: clamp(18px, 2.5vw, 30px); font-weight: 900; letter-spacing: 3px; text-transform: uppercase; padding: 12px 30px; border-radius: 4px; background: var(--accent-dim); }
+    .final-points { max-width: 620px; text-align: left; }
+    .final-point { font-size: clamp(12px, 1.1vw, 13.5px); color: var(--text-dim); line-height: 1.75; padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start; }
+    .final-point::before { content: '→'; color: var(--gold); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* PATTERN CARDS */
+    .pattern-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .pattern-card { background: var(--gold-dim); border: 1px solid var(--gold-border); border-left: 4px solid var(--gold); border-radius: 8px; padding: 12px 16px; }
+    .pattern-card-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+    .pattern-card-text { font-size: 12px; color: var(--text); line-height: 1.6; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .slide-section { padding: 48px 20px 60px; }
+      .two-col, .two-col-wide, .verdict-grid { grid-template-columns: 1fr; }
+      .cover-stats { flex-wrap: wrap; justify-content: center; }
+    }
+    @media (min-width: 769px) {
+      .main { scroll-snap-type: y mandatory; }
+      .slide-section, .divider-slide, .cover-slide, .final-slide { scroll-snap-align: start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">OPERATION <span>RED THREAD</span></div>
+  <div class="nav-center">
+    <button class="nav-btn" id="btnPrev">&#8592;</button>
+    <span class="slide-counter" id="slideCounter">1 / 17</span>
+    <button class="nav-btn" id="btnNext">&#8594;</button>
+  </div>
+</nav>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<div class="main" id="mainContent">
+
+  <!-- ===== SLIDE 1: COVER ===== -->
+  <section class="cover-slide slide-section" id="slide-1">
+    <div class="cover-corner tl"></div>
+    <div class="cover-corner tr"></div>
+    <div class="cover-corner bl"></div>
+    <div class="cover-corner br"></div>
+    <div class="cover-stamp">FORENSIC INVESTIGATION FILE</div>
+    <div class="cover-title">OPERATION<br><span>RED THREAD</span></div>
+    <div class="cover-tagline">The Complete Ancient-to-Modern Control Matrix: A Rigorous Historical Investigation of 24 Threads Spanning 12,000 Years</div>
+    <div class="cover-divider"></div>
+    <div class="cover-stats">
+      <div class="cover-stat"><div class="cover-stat-num">8</div><div class="cover-stat-label">Primary Threads</div></div>
+      <div class="cover-stat"><div class="cover-stat-num">16</div><div class="cover-stat-label">Additional Threads</div></div>
+      <div class="cover-stat"><div class="cover-stat-num">24</div><div class="cover-stat-label">Total Investigations</div></div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 2: HOW TO READ ===== -->
+  <section class="slide-section" id="slide-2">
+    <div class="section-label">Slide 2 of 17</div>
+    <div class="slide-title">How to Read This Report</div>
+    <div class="tier-grid">
+      <div class="tier-card tier-a">
+        <div class="tier-label">A — Documented Fact</div>
+        <div class="tier-desc">Verified events with credible primary sources. No dispute among mainstream scholars.</div>
+      </div>
+      <div class="tier-card tier-b">
+        <div class="tier-label">B — Contested</div>
+        <div class="tier-desc">Interpretive disputes or claims with controversial or incomplete evidence. Both sides have merit.</div>
+      </div>
+      <div class="tier-card tier-c">
+        <div class="tier-label">C — Speculative</div>
+        <div class="tier-desc">Claims without strong evidence. Not proven false, but not supported by mainstream scholarship.</div>
+      </div>
+      <div class="tier-card tier-d">
+        <div class="tier-label">D — Dismissed, Now Confirmed</div>
+        <div class="tier-desc">Once mocked as conspiracy theory. Later proven true by documents, declassifications, or events.</div>
+      </div>
+    </div>
+    <div class="forgery-alert" style="margin-top:10px;">
+      <div class="forgery-alert-title">X — Definitively False</div>
+      <div class="block-text">Claims that are demonstrably false, fabricated, or based on outright forgery. Treated with the same rigor as Tier A — but in reverse.</div>
+    </div>
+    <div class="content-block block-section" style="margin-top:10px;">
+      <div class="block-tag">The Chart's Method</div>
+      <div class="block-text">This investigation examines a chart connecting ancient Egypt → medieval orders → modern banking → secret societies into one "control matrix." We evaluate each node and arrow by the evidence, not by the narrative the chart imposes.</div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 3: SECTION DIVIDER ===== -->
+  <section class="divider-slide" id="slide-3">
+    <div class="divider-eyebrow">SECTION ONE</div>
+    <div class="divider-divider"></div>
+    <div class="divider-title">Thread 1 &amp; 2</div>
+    <div class="divider-sub">Akhenaten &amp; the Amarna Revolution — Ancient Origins of Monotheism, Egypt &amp; the Birth of Abrahamic Religion<br><br>Council of Nicaea 325 AD — The Deity Selection: Political Consolidation or Divine Truth?</div>
+    <div class="divider-divider"></div>
+    <div class="slide-num-badge" style="margin-top:8px;">SLIDE 3</div>
+  </section>
+
+  <!-- ===== SLIDE 4: AKHENATEN ===== -->
+  <section class="slide-section" id="slide-4">
+    <div class="section-label">Thread 1 &nbsp;|&nbsp; Ancient Origins</div>
+    <div class="slide-title">Akhenaten &amp; the Amarna Revolution</div>
+    <div class="slide-meta"><div class="slide-num-badge">SLIDE 4</div><div class="thread-badge">Ancient Origins</div></div>
+    <div class="content-block block-fact" style="margin-top:10px;">
+      <div class="block-tag">A — Documented Fact</div>
+      <div class="block-text">Akhenaten (c.1353–1336 BCE) introduced <strong>Atenism</strong> — worship of the sun disk (Aten) as supreme deity. He built <strong>Akhenaten</strong> (Amarna) as a new capital, changed Egyptian art radically. After his death his monuments were systematically destroyed (<strong>damnatio memoriae</strong>). DNA confirmed his burial in Tomb 55. Amarna art is unique in Egyptian history.</div>
+    </div>
+    <div class="content-block block-contested">
+      <div class="block-tag">B — Contested</div>
+      <div class="block-text">Whether Atenism influenced later Abrahamic monotheism is debated — mainstream scholars say unlikely. Akhenaten's proposed genetic disorders are interpretive, not proven. The claim he directly influenced Moses or Jewish theology lacks credible evidence.</div>
+    </div>
+    <div class="content-block block-speculative">
+      <div class="block-tag">C — Speculative</div>
+      <div class="block-text">'Built by survivors of an advanced lost civilization' — no mainstream support. 'Proof of pre-flood civilization' — unproven. The 'Sphinx was built by a lost advanced civilization' is pseudoscience with no archaeological support.</div>
+    </div>
+    <div class="pattern-box">
+      <div class="pattern-label">D — Dismissed, Now Confirmed</div>
+      <div class="pattern-text">The systematic destruction of Akhenaten's monuments (damnatio memoriae) IS confirmed — this erasure campaign mirrors how societies destroy inconvenient histories. His modest burial vs. traditional pharaoh excess is documented.</div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 5: COUNCIL OF NICAEA ===== -->
+  <section class="slide-section" id="slide-5">
+    <div class="section-label">Thread 2 &nbsp;|&nbsp; Ancient Origins</div>
+    <div class="slide-title">Council of Nicaea 325 AD</div>
+    <div class="slide-meta"><div class="slide-num-badge">SLIDE 5</div><div class="thread-badge">Ancient Origins</div></div>
+    <div class="content-block block-fact" style="margin-top:10px;">
+      <div class="block-tag">A — Documented Fact</div>
+      <div class="block-text">Council convened by Constantine I in Nicaea 325 AD. Primarily addressed the Arian controversy (Christ's nature). Produced the Nicene Creed affirming <em>homoousios</em> (same substance) as the Father. Constantine paid expenses, presided — was <strong>NOT yet baptized a Christian</strong>. Arianism was <strong>NOT</strong> defeated at Nicaea — it persisted for centuries.</div>
+    </div>
+    <div class="content-block block-contested">
+      <div class="block-tag">B — Contested</div>
+      <div class="block-text">Constantine's motives (political vs. theological) — both likely played a role. The Council 'selected' Jesus's divinity is <strong>MISLEADING</strong> — it defined existing belief rather than inventing new theology. Constantine's influence on the biblical canon is debated.</div>
+    </div>
+    <div class="forgery-alert">
+      <div class="forgery-alert-title">X — Definitively False Claim in the Chart</div>
+      <div class="block-text"><strong>'Jesus was originally a sun god'</strong> — FALSE. Based on misread Egyptian mythology. Horus, Osiris, and Jesus share mythological parallels common to ancient religions, but the <strong>historical Jesus of Nazareth</strong> was a 1st-century Jewish apocalyptic preacher. This claim is ahistorical nonsense.</div>
+    </div>
+    <div class="pattern-box">
+      <div class="pattern-label">D — Dismissed, Now Confirmed</div>
+      <div class="pattern-text">Constantine's political motivations heavily influenced proceedings — now accepted by mainstream scholarship. Arianism persisted for decades after Nicaea. Constantine's use of religion for political consolidation is well-documented.</div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 6: TEMPLARS ===== -->
+  <section class="slide-section" id="slide-6">
+    <div class="section-label">Thread 3 &nbsp;|&nbsp; Medieval Power</div>
+    <div class="slide-title">Knights Templar 1119–1312</div>
+    <div class="slide-meta"><div class="slide-num-badge">SLIDE 6</div><div class="thread-badge">Medieval Power</div></div>
+    <div class="content-block block-fact" style="margin-top:10px;">
+      <div class="block-tag">A — Documented Fact</div>
+      <div class="block-text">Founded c.1118–1119 by Hugues de Payens. ~15–20K members at peak. Developed early banking network across Europe — letters of credit, deposits, government financing. Arrested by Philip IV of France on <strong>October 13, 1307</strong>. Grand Master Jacques de Molay burned 1314. Order dissolved 1312. <strong>Philip IV eliminated them specifically to erase his debts to them.</strong></div>
+    </div>
+    <div class="content-block block-contested">
+      <div class="block-tag">B — Contested / Legends</div>
+      <div class="block-text">'Friday the 13th' superstition — folk etymology, NOT historically documented. Templar 'secret treasure' and Rosslyn Chapel — unproven romantic legends. The torture confessions were extracted under duress and widely dismissed by modern historians.</div>
+    </div>
+    <div class="pattern-box">
+      <div class="pattern-label">D — Dismissed, Now Confirmed</div>
+      <div class="pattern-text"><strong>Philip IV FABRICATED charges to eliminate his debts to the Templars</strong> — acknowledged by modern scholarship. The trial was political persecution, NOT justice. The Templars were innocent of heresy charges. They were destroyed by a bankrupt king's greed.</div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 7: ROTHSCHILDS ===== -->
+  <section class="slide-section" id="slide-7">
+    <div class="section-label">Thread 4 &nbsp;|&nbsp; Banking Power</div>
+    <div class="slide-title">The Rothschild Dynasty</div>
+    <div class="slide-meta"><div class="slide-num-badge">SLIDE 7</div><div class="thread-badge">Banking Power</div></div>
+    <div class="content-block block-fact" style="margin-top:10px;">
+      <div class="block-tag">A — Documented Fact</div>
+      <div class="block-text">Mayer Amschel Rothschild (1744–1812) established the dynasty in Frankfurt. Five sons: branches in Vienna, London, Naples, Paris, Frankfurt. Nathan Rothschild financed the British war effort in Napoleonic Wars. By 1820s–1870s: largest private fortune in the world. Financed railways, Cecil Rhodes, Suez Canal, De Beers. Family was viciously persecuted by Nazis. Fortune declined in 20th century through wars and nationalization.</div>
+    </div>
+    <div class="content-block block-contested">
+      <div class="block-tag">B — Contested</div>
+      <div class="block-text">'Controlled world finances' — exaggerated. Rothschilds dominated 19th century banking but declined in 20th. 'Caused wars for profit' — no credible evidence. 'Own the Federal Reserve' — <strong>FALSE</strong>. Fed created 1913; family banking influence had already declined.</div>
+    </div>
+    <div class="content-block block-speculative">
+      <div class="block-tag">C — Speculative / Unsubstantiated</div>
+      <div class="block-text">Alleged funding of Communist revolution, funding both sides of the Civil War — no credible evidence. Alleged 'New World Order' orchestration — no evidence.</div>
+    </div>
+    <div class="pattern-box">
+      <div class="pattern-label">D — Dismissed, Now Confirmed</div>
+      <div class="pattern-text">Antisemitic conspiracy theories about Rothschilds are false and exceed documented reality. Family was severely persecuted by Nazis (confirmed). Their fortune genuinely declined in 20th century through wars, nationalization, inheritance division (confirmed). Their 19th-century dominance is documented fact, not conspiracy.</div>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 8: FEDERAL RESERVE ===== -->
+  <section class="slide-section" id="slide-8">
+    <div class="section-label">Thread 5 &nbsp;|&nbsp; Modern Banking</div>
+    <div class="slide-title">The Federal Reserve 1913</div>
+    <div class="slide-meta"><div class="slide-num-badge">SLIDE 8</div><div class="thread-badge">Modern Banking</div></div>
+    <div class="content-block block-fact" style="margin-top:10px;">
+      <div class="block-tag">A — Documented Fact</div>
+      <div class="block-text">Panic of 1907 led to demands for reform. Jekyll Island meeting Nov 1910: Senator Aldrich + private bankers (Paul Warburg, Frank Vanderlip, Henry Davison) drafted plan <strong>in secret</strong>. Federal Reserve Act passed Dec 23, 1913, signed by Wilson. Created 12 regional Federal Reserve Banks. Hybrid public-private entity. Aldrich plan heavily influenced final legislation.</div>
+    </div>
+    <div class="pattern-box">
+      <div class="pattern-label">D — Dismissed, Now Confirmed</div>
+      <div class="pattern-text">Jekyll Island meeting <strong>WAS secret</strong> (confirmed by participant memoirs). Private bankers heavily influenced design (confirmed). Aldrich-Vreeland plan WAS the blueprint (confirmed). The process was NOT a transparent public process — it was a bankers' draft pushed through Congress.</div>
+    </div>
+    <div class="content-block block-contested">
+      <div class="block-tag">B — Contested</div>
+      <div class="block-text">'Secret cabal created Fed to control America' — exaggerated. '
