@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPERATION RED THREAD â€” Case Board</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Special+Elite&family=Rubik+Vinyl&display=swap');
+
+:root {
+  --string-red: #c0392b;
+  --string-yellow: #f39c12;
+  --pin-red: #e74c3c;
+  --pin-blue: #2980b9;
+  --pin-green: #27ae60;
+  --stamp-red: #cc0000;
+  --stamp-blue: #003399;
+  --paper-yellow: #f5e6c8;
+  --paper-white: #f0ead6;
+  --paper-aged: #e8dcc8;
+  --ink-dark: #1a1a1a;
+  --chalk-white: #f0f0e8;
+  --cork: #c8a87a;
+  --wood-dark: #3d2b1f;
+  --wood-light: #5c4033;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0505;
+  font-family: 'Special Elite', cursive;
+  overflow-x: hidden;
+  cursor: default;
+  user-select: none;
+}
+
+/* WOODEN FRAME */
+.board-frame {
+  position: relative;
+  background: linear-gradient(135deg, var(--wood-dark) 0%, var(--wood-light) 50%, var(--wood-dark) 100%);
+  padding: 18px;
+  min-height: 100vh;
+}
+
+/* CORKBOARD */
+.board {
+  position: relative;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, #c9a878 0px, #c9a878 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(90deg, #c9a878 0px, #c9a878 2px, transparent 2px, transparent 8px),
+    linear-gradient(180deg, #d4b896 0%, #c8a87a 40%, #bfa072 100%);
+  background-color: #d4b896;
+  border-radius: 3px;
+  min-height: 100vh;
+  overflow: hidden;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.3);
+}
+
+/* SVG STRING LAYER */
+.string-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.string-layer line {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+/* PUSHPINS */
+.pin {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  z-index: 20;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.pin::after {
+  content: '';
+  position: absolute;
+  top: 6px; left: 6px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+}
+.pin-red { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b); }
+.pin-blue { background: radial-gradient(circle at 30% 30%, #5dade2, #1a5276); }
+.pin-yellow { background: radial-gradient(circle at 30% 30%, #f7dc6f, #d4ac0d); }
+.pin-green { background: radial-gradient(circle at 30% 30%, #58d68d, #1e8449); }
+.pin-black { background: radial-gradient(circle at 30% 30%, #5a5a5a, #1a1a1a); }
+.pin-white { background: radial-gradient(circle at 30% 30%, #ecf0f1, #bdc3c7); }
+
+/* PHOTO CARDS */
+.photo-card {
+  position: absolute;
+  z-index: 10;
+  cursor: grab;
+  transition: transform 0.1s;
+}
+.photo-card:hover { z-index: 30; transform: scale(1.04) rotate(0deg) !important; }
+.photo-card:active { cursor: grabbing; }
+
+.photo-frame {
+  background: #f5f5dc;
+  padding: 8px 8px 28px 8px;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.5), -1px -1px 3px rgba(255,255,255,0.2);
+  transform: rotate(var(--rot, 0deg));
+  position: relative;
+  border: 1px solid #d4c8a0;
+}
+.photo-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.photo-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+  filter: sepia(30%) contrast(1.1) brightness(0.95);
+  border: 1px solid #c0b080;
+}
+
+.photo-name {
+  font-family: 'Special Elite', cursive;
+  font-size: 11px;
+  color: #1a1a1a;
+  text-align: center;
+  margin-top: 6px;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+}
+
+.photo-label {
+  font-family: 'Special Elite', cursive;
+  font-size: 9px;
+  color: #555;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.photo-pin {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* STICKY NOTES */
+.sticky {
+  position: absolute;
+  z-index: 12;
+  padding: 12px 14px;
+  width: 180px;
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #1a1a1a;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+  transform: rotate(var(--rot, 0deg));
+  border: 1px solid rgba(0,0,0,0.1);
+  cursor: grab;
+}
+.sticky-yellow { background: linear-gradient(180deg, #fff9a8 0%, #fff200 100%); }
+.sticky-pink { background: linear-gradient(180deg, #ffccd5 0%, #ffb3c1 100%); }
+.sticky-blue { background: linear-gradient(180deg, #a8d8ff 0%, #81c3ff 100%); }
+.sticky-green { background: linear-gradient(180deg, #c8f7c5 0%, #a8e6a3 100%); }
+.sticky-orange { background: linear-gradient(180deg, #ffe0b2 0%, #ffcc80 100%); }
+.sticky::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: rgba(0,0,0,0.05);
+}
+
+.sticky-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #000;
+}
+
+.sticky-body {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* NEWSPAPER CLIPPINGS */
+.clipping {
+  position: absolute;
+  z-index: 11;
+  background: var(--paper-aged);
+  padding: 14px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+  transform: rotate(var(--rot, 0deg));
+  max-width: 260px;
+  border: 1px solid #d4c8a0;
+  cursor: grab;
+}
+
+.clipping-title {
+  font-family: 'Special Elite', cursive;
+  font-size: 14px;
+  font-weight: bold;
+  color: #111;
+  text-transform: uppercase;
+  border-bottom: 2px solid #111;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+
+.clipping-body {
+  font-family: 'Special Elite', cursive;
+  font-size: 11px;
+  color: #222;
+  line-height: 1.5;
+  column-count: 1;
+}
+
+.clipping-body p { margin-bottom: 6px; }
+.clipping-tear {
+  position: absolute;
+  bottom: -5px;
+  left: 0; right: 0;
+  height: 8px;
+  background: var(--paper-aged);
+  clip-path: polygon(0% 50%, 2% 0%, 4% 50%, 6% 0%, 8% 50%, 10% 0%, 12% 50%, 14% 0%, 16% 50%, 18% 0%, 20% 50%, 22% 0%, 24% 50%, 26% 0%, 28% 50%, 30% 0%, 32% 50%, 34% 0%, 36% 50%, 38% 0%, 40% 50%, 42% 0%, 44% 50%, 46% 0%, 48% 50%, 50% 0%, 52% 50%, 54% 0%, 56% 50%, 58% 0%, 60% 50%, 62% 0%, 64% 50%, 66% 0%, 68% 50%, 70% 0%, 72% 50%, 74% 0%, 76% 50%, 78% 0%, 80% 50%, 82% 0%, 84% 50%, 86% 0%, 88% 50%, 90% 0%, 92% 50%, 94% 0%, 96% 50%, 98% 0%, 100% 50%, 100% 100%, 0% 100%);
+}
+
+/* STAMPS */
+.stamp {
+  position: absolute;
+  z-index: 15;
+  border: 4px solid;
+  padding: 6px 10px;
+  font-family: 'Special Elite', cursive;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transform: rotate(var(--rot, -8deg));
+  opacity: 0.88;
+  cursor: grab;
+  background: transparent;
+}
+.stamp-confirmed {
+  border-color: #1e8449;
+  color: #1e8449;
+}
+.stamp-forgery {
+  border-color: #cc0000;
+  color: #cc0000;
+}
+.stamp-follow {
+  border-color: #003399;
+  color: #003399;
+}
+.stamp-deadend {
+  border-color: #555;
+  color: #555;
+}
+.stamp-key {
+  border-color: var(--string-red);
+  color: var(--string-red);
+}
+.stamp-topsecret {
+  border-color: #8b0000;
+  color: #8b0000;
+}
+
+/* HANDWRITTEN LABELS */
+.label-card {
+  position: absolute;
+  z-index: 12;
+  background: var(--paper-white);
+  padding: 8px 12px;
+  font-family: 'Caveat', cursive;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+  transform: rotate(var(--rot, 0deg));
+  max-width: 160px;
+  border: 1px solid #d4c8a0;
+  cursor: grab;
+}
+.label-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+.label-sub {
+  font-size: 11px;
+  color: #555;
+}
+
+/* EVIDENCE TAGS */
+.evidence-tag {
+  position: absolute;
+  z-index: 13;
+  padding: 4px 10px;
+  font-family: 'Special Elite', cursive;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+  transform: rotate(var(--rot, 0deg));
+  cursor: grab;
+}
+.tag-a { background: #1a3a1a; color: #2ecc71; border: 2px solid #2ecc71; }
+.tag-b { background: #3a3a1a; color: #f39c12; border: 2px solid #f39c12; }
+.tag-c { background: #3a2a1a; color: #e67e22; border: 2px solid #e67e22; }
+.tag-d { background: #3a1a1a; color: #e63946; border: 2px solid #e63946; }
+.tag-x { background: #2a2a2a; color: #fff; border: 2px solid #fff; }
+
+/* SECTION HEADERS */
+.section-header {
+  position: absolute;
+  z-index: 14;
+  background: var(--wood-dark);
+  color: #f0e6d0;
+  padding: 8px 16px;
+  font-family: 'Special Elite', cursive;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.5);
+  transform: rotate(var(--rot, 0deg));
+  border: 2px solid #8b6914;
+  cursor: grab;
+}
+.section-header span {
+  color: #c9a84c;
+}
+
+/* ARROW LABELS */
+.arrow-label {
+  position: absolute;
+  z-index: 16;
+  background: var(--paper-yellow);
+  padding: 2px 8px;
+  font-family: 'Special Elite', cursive;
+  font-size: 10px;
+  color: #1a1a1a;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+
+/* CENTRAL THREAD LINE */
+.central-thread {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--string-red) 0px,
+    var(--string-red) 20px,
+    transparent 20px,
+    transparent 28px
+  );
+  z-index: 3;
+  opacity: 0.5;
+}
+
+/* COFFEE RING */
+.coffee-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid rgba(101, 67, 33, 0.25);
+  box-shadow: inset 0 0 10px rgba(101, 67, 33, 0.15);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* TITLE BANNER */
+.board-title {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: var(--wood-dark);
+  border: 3px solid var(--string-red);
+  padding: 8px 28px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+.board-title h1 {
+  font-family: 'Rubik Vinyl', cursive;
+  font-size: 22px;
+  color: #f0e6d0;
+  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 #000;
+}
+.board-title h1 span { color: #e74c3c; }
+.board-title p {
+  font-family: 'Special Elite', cursive;
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 3px;
+  margin-top: 2px;
+}
+
+/* LEGEND */
+.legend {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  background: var(--wood-dark);
+  border: 2px solid #8b6914;
+  padding: 12px 16px;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.6);
+  min-width: 180px;
+}
+.legend h3 {
+  font-family: 'Special Elite', cursive;
+  font-size: 11px;
+  color: #c9a84c;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #8b6914;
+  padding-bottom: 4px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-line {
+  width: 24px;
+  height: 3px;
+  flex-shrink: 0;
+}
+.legend-text {
+  font-family: 'Special Elite', cursive;
+  font-size: 10px;
+  color: #ccc;
+}
+
+/* DRAG INDICATOR */
+.drag-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+  background: rgba(0,0,0,0.7);
+  color: #888;
+  font-family: 'Special Elite', cursive;
+  font-size: 10px;
+  padding: 8px 12px;
+  letter-spacing: 1px;
+  border: 1px solid #444;
+}
+
+/* SCROLL HINT */
+.scroll-hint {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  background: rgba(0,0,0,0.5);
+  padding: 8px;
+  border-radius: 4px;
+}
+.scroll-hint span {
+  font-size: 9px;
+  color: #888;
+  writing-mode: vertical-rl;
+  font-family: 'Special Elite', cursive;
+  letter-spacing: 1px;
+}
+
+/* FORGERY WATERMARK */
+.forgery-watermark {
+  position: absolute;
+  z-index: 1;
+  font-family: 'Special Elite', cursive;
+  font-size: 80px;
+  color: rgba(200, 0, 0, 0.06);
+  font-weight: bold;
+  transform: rotate(-30deg);
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 10px;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .board-title h1 { font-size: 16px; }
+  .legend { display: none; }
+  .drag-hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="board-frame">
+  <div class="board" id="board">
+
+    <!-- Central Thread -->
+    <div class="central-thread"></div>
+
+    <!-- Title -->
+    <div class="board-title">
+      <h1>OPERATION <span>RED THREAD</span></h1>
+      <p>Case File No. RT-001 â€” Classified Investigation</p>
+    </div>
+
+    <!-- ===================== STRING SVG LAYER ===================== -->
+    <svg class="string-layer" id="stringLayer" viewBox="0 0 1440 3200" preserveAspectRatio="none">
+      <!-- TEMPLAR STRING CONNECTIONS -->
+      <line x1="720" y1="480" x2="480" y2="620" stroke="#c0392b" opacity="0.7"/>
+      <line x1="720" y1="480" x2="960" y2="560" stroke="#c0392b" opacity="0.7"/>
+      <line x1="480" y1="620" x2="400" y2="780" stroke="#c0392b" opacity="0.6"/>
+      <line x1="960" y1="560" x2="1080" y2="720" stroke="#c0392b" opacity="0.6"/>
+
+      <!-- ROTHSCHILD CONNECTIONS -->
+      <line x1="720" y1="880" x2="360" y2="960" stroke="#c0392b" opacity="0.7"/>
+      <line x1="720" y1="880" x2="1080" y2="940" stroke="#c0392b" opacity="0.7"/>
+      <line x1="360" y1="960" x2="300" y2="1100" stroke="#c0392b" opacity="0.6"/>
+      <line x1="1080" y1="940" x2="1140" y2="1080" stroke="#c0392b" opacity="0.6"/>
+
+      <!-- FED CONNECTIONS -->
+      <line x1="720" y1="1200" x2="400" y2="1280" stroke="#c0392b" opacity="0.8"/>
+      <line x1="720" y1="1200" x2="1040" y2="1260" stroke="#c0392b" opacity="0.8"/>
+      <line x1="400" y1="1280" x2="300" y2="1420" stroke="#e74c3c" stroke-dasharray="6,4" opacity="0.5"/>
+      <line x1="1040" y1="1260" x2="1120" y2="1400" stroke="#e74c3c" stroke-dasharray="6,4" opacity="0.5"/>
+
+      <!-- PROTOCOLS FABRICATED -->
+      <line x1="720" y1="1550" x2="400" y2="1630" stroke="#f39c12" opacity="0.7"/>
+      <line x1="720" y1="1550" x2="1040" y2="1610" stroke="#f39c12" opacity="0.7"/>
+      <line x1="400" y1="1630" x2="280" y2="1760" stroke="#f39c12" opacity="0.5"/>
+      <line x1="1040" y1="1610" x2="1160" y2="1740" stroke="#f39c12" opacity="0.5"/>
+
+      <!-- GOBEKLI TEPE -->
+      <line x1="720" y1="1900" x2="480" y2="1980" stroke="#888" opacity="0.5"/>
+      <line x1="720" y1="1900" x2="960" y2="1970" stroke="#888" opacity="0.5"/>
+
+      <!-- WWI CONNECTIONS -->
+      <line x1="720" y1="2150" x2="380" y2="2230" stroke="#c0392b" opacity="0.7"/>
+      <line x1="720" y1="2150" x2="1060" y2="2220" stroke="#c0392b" opacity="0.7"/>
+      <line x1="380" y1="2230" x2="280" y2="2370" stroke="#f39c12" stroke-dasharray="5,3" opacity="0.5"/>
+
+      <!-- BILDERBERG -->
+      <line x1="720" y1="2400" x2="440" y2="2480" stroke="#888" opacity="0.6"/>
+      <line x1="720" y1="2400" x2="1000" y2="2470" stroke="#888" opacity="0.6"/>
+
+      <!-- FINAL VERDICT -->
+      <line x1="720" y1="2650" x2="360" y2="2730" stroke="#2ecc71" opacity="0.6"/>
+      <line x1="720" y1="2650" x2="1080" y2="2720" stroke="#e74c3c" opacity="0.7"/>
+      <line x1="720" y1="2650" x2="720" y2="2800" stroke="#c0392b" stroke-width="4" opacity="0.9"/>
+    </svg>
+
+    <!-- ===================== THREAD 1: ANCIENT ORIGINS ===================== -->
+    <div class="section-header" style="top:80px; left:50%; transform:translateX(-50%) rotate(0deg);">&#9679; THREAD 1: Ancient Origins &mdash; Monotheism &#9679;</div>
+
+    <!-- AKHENATEN -->
+    <div class="photo-card" style="left:100px; top:160px; --rot:-3deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:140px;">
+        <div class="photo-pin pin pin-yellow"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Akhenaten_Nefertiti_Children_Stele.jpg/440px-Akhenaten_Nefertiti_Children_Stele.jpg" alt="Akhenaten" onerror="this.style.display='none'"/>
+        <div class="photo-name">AKHENATEN</div>
+        <div class="photo-label">c.1353â€“1336 BCE</div>
+      </div>
+    </div>
+
+    <!-- COUNCIL OF NICAEA -->
+    <div class="photo-card" style="right:100px; top:160px; --rot:2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:140px;">
+        <div class="photo-pin pin pin-red"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Constantine_the_Great_by_Raffaele_Cola_BC.jpg/440px-Constantine_the_Great_by_Raffaele_Cola_BC.jpg" alt="Constantine" onerror="this.style.display='none'"/>
+        <div class="photo-name">CONSTANTINE I</div>
+        <div class="photo-label">Council of Nicaea 325 AD</div>
+      </div>
+    </div>
+
+    <div class="evidence-tag tag-a" style="top:320px; left:120px; --rot:-2deg;">Tier A â€” Documented</div>
+    <div class="stamp stamp-deadend" style="top:330px; right:120px; --rot:6deg;">NO DIRECT LINK TO JESUS</div>
+
+    <!-- Sticky: Nicaea Note -->
+    <div class="sticky sticky-yellow" style="left:260px; top:200px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">Constantine's Motive:</div>
+      <div class="sticky-body">Political unity of empire â€” NOT divine truth. Both motives played a role. Arianism persisted for DECADES after Council.</div>
+    </div>
+
+    <!-- Clipping: Jesus Fact -->
+    <div class="clipping" style="right:80px; top:310px; width:220px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title" style="color:#cc0000;">The Jesus Claim</div>
+      <div class="clipping-body">
+        <p><strong>X â€” FABRICATED:</strong> The claim "Jesus was originally a sun god" is ahistorical nonsense based on misread Egyptian mythology.</p>
+        <p>Horus, Osiris and Jesus share mythological parallels common to ancient religions â€” but the historical Jesus was a 1st-century Jewish apocalyptic preacher.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <!-- ===================== THREAD 2: TEMPLARS ===================== -->
+    <div class="section-header" style="top:440px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 2: Knights Templar 1119â€“1312 &#9679;</div>
+
+    <!-- Philip IV -->
+    <div class="photo-card" style="left:80px; top:520px; --rot:-4deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:130px;">
+        <div class="photo-pin pin pin-black"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Philippe_IV_le_Bel.jpg/440px-Philippe_IV_le_Bel.jpg" alt="Philip IV" onerror="this.style.display='none'"/>
+        <div class="photo-name">PHILIP IV "The Fair"</div>
+        <div class="photo-label">King of France â€” Debtor</div>
+      </div>
+    </div>
+
+    <!-- Jacques de Molay -->
+    <div class="photo-card" style="right:80px; top:510px; --rot:3deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:130px;">
+        <div class="photo-pin pin pin-red"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Jacques_de_Molay.jpg/440px-Jacques_de_Molay.jpg" alt="Jacques de Molay" onerror="this.style.display='none'"/>
+        <div class="photo-name">JACQUES DE MOLAY</div>
+        <div class="photo-label">Grand Master â€” Burned 1314</div>
+      </div>
+    </div>
+
+    <div class="stamp stamp-key" style="top:660px; left:90px; --rot:-6deg;">FABRICATED CHARGES</div>
+    <div class="stamp stamp-confirmed" style="top:670px; right:90px; --rot:4deg;">INNOCENT â€” Political Victim</div>
+
+    <!-- Sticky: Philip's Motive -->
+    <div class="sticky sticky-orange" style="left:230px; top:580px; width:200px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">Philip's Debt:</div>
+      <div class="sticky-body">The King owed the Templars MASSIVE debts. He fabricated heresy charges to erase his debts and seize their assets. The confessions? Extracted under TORTURE.</div>
+    </div>
+
+    <div class="label-card" style="right:60px; top:680px; --rot:-2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="label-title">"Friday the 13th"</div>
+      <div class="label-sub">Folk etymology â€” NOT historically documented. The superstition came from THIS arrest: Oct 13, 1307.</div>
+    </div>
+
+    <!-- ===================== THREAD 3: ROTHSCHILDS ===================== -->
+    <div class="section-header" style="top:800px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 3: The Rothschild Dynasty &#9679;</div>
+
+    <!-- Mayer Rothschild -->
+    <div class="photo-card" style="left:60px; top:880px; --rot:-2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:120px;">
+        <div class="photo-pin pin pin-yellow"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mayer_Amschel_Rothschild.jpg/440px-Mayer_Amschel_Rothschild.jpg" alt="Mayer Rothschild" onerror="this.style.display='none'"/>
+        <div class="photo-name">MAYER AMSCHEL</div>
+        <div class="photo-label">1744â€“1812 Frankfurt</div>
+      </div>
+    </div>
+
+    <!-- Five Sons Map -->
+    <div class="clipping" style="left:200px; top:880px; width:200px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">The 5 Sons â€” Global Empire</div>
+      <div class="clipping-body">
+        <p>&#9679; <strong>London</strong> â€” Nathan Mayer</p>
+        <p>&#9679; <strong>Vienna</strong> â€” Salomon Mayer</p>
+        <p>&#9679; <strong>Paris</strong> â€” James Mayer</p>
+        <p>&#9679; <strong>Frankfurt</strong> â€” Amschel Mayer</p>
+        <p>&#9679; <strong>Naples</strong> â€” Carl Mayer</p>
+        <p style="margin-top:6px;border-top:1px solid #333;padding-top:4px;">By 1820sâ€“1870s: LARGEST private fortune in the world.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="evidence-tag tag-a"<div class="evidence-tag tag-a" style="top:950px; left:80px; --rot:-3deg;">Tier A — Dominant 19thC Banking</div>
+    <div class="evidence-tag tag-c" style="top:1010px; left:80px; --rot:2deg;">Tier C — World Domination Claims</div>
+
+    <div class="sticky sticky-blue" style="right:60px; top:900px; width:190px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">NAZI PERSECUTION:</div>
+      <div class="sticky-body">Family was viciously persecuted by Nazis. Fortunes seized. Their decline in the 20thC is documented — NOT a cover-up.</div>
+    </div>
+
+    <div class="sticky sticky-pink" style="right:60px; top:1080px; width:190px; --rot:2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">Antisemitic Trope:</div>
+      <div class="sticky-body">Conspiracy theories about Rothschilds EXCEED documented reality. The bloodline narrative is a classic antisemitic trope.</div>
+    </div>
+
+    <div class="clipping" style="left:50px; top:1060px; width:210px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">What They Actually Financed</div>
+      <div class="clipping-body">
+        <p>&#9679; Cecil Rhodes — De Beers Diamond Empire</p>
+        <p>&#9679; Suez Canal</p>
+        <p>&#9679; European Railway Networks</p>
+        <p>&#9679; British War Effort vs Napoleon</p>
+        <p style="margin-top:6px;color:#555;">All documented. Legitimate banking. NOT secret world control.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <!-- THREAD 4: FEDERAL RESERVE -->
+    <div class="section-header" style="top:1180px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 4: Federal Reserve 1913 &#9679;</div>
+
+    <div class="photo-card" style="left:60px; top:1260px; --rot:-3deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:120px;">
+        <div class="photo-pin pin pin-blue"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Nelson_Wm_Aldrich_1900.jpg/440px-Nelson_Wm_Aldrich_1900.jpg" alt="Nelson Aldrich" onerror="this.style.display='none'"/>
+        <div class="photo-name">SEN. NELSON ALDRICH</div>
+        <div class="photo-label">Jekyll Island 1910</div>
+      </div>
+    </div>
+
+    <div class="photo-card" style="right:60px; top:1260px; --rot:2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:120px;">
+        <div class="photo-pin pin pin-blue"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Paul_Warburg.jpg/440px-Paul_Warburg.jpg" alt="Paul Warburg" onerror="this.style.display='none'"/>
+        <div class="photo-name">PAUL WARBURG</div>
+        <div class="photo-label">Private Banker — Fed Architect</div>
+      </div>
+    </div>
+
+    <div class="sticky sticky-yellow" style="left:200px; top:1280px; width:200px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">Jekyll Island — Nov 1910:</div>
+      <div class="sticky-body">Aldrich + private bankers (Warburg, Vanderlip, Davison) DRAFTED the Federal Reserve Act in SECRET. Then pushed through Congress in 'public' process.</div>
+    </div>
+
+    <div class="stamp stamp-key" style="top:1420px; left:60px; --rot:-8deg;">JEKYLL ISLAND — SECRET</div>
+    <div class="stamp stamp-confirmed" style="top:1430px; right:60px; --rot:5deg;">CONFIRMED BY MEMOIRS</div>
+
+    <div class="clipping" style="left:50px; top:1450px; width:220px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">The Private Bankers Plan</div>
+      <div class="clipping-body">
+        <p>The Aldrich-Vreeland plan was the BLUEPRINT for the Federal Reserve Act.</p>
+        <p>12 regional banks. Hybrid public-private entity. Returns profits to Treasury — but designed by PRIVATE BANKERS for PRIVATE INTERESTS.</p>
+        <p style="margin-top:4px;font-weight:bold;color:#1a1a1a;">Tier D: Dismissed, NOW CONFIRMED</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="sticky sticky-orange" style="right:50px; top:1430px; width:180px; --rot:-2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">What's Exaggerated:</div>
+      <div class="sticky-body">"Secret cabal to control America" — exaggerated. "Created for world government" — no evidence.</div>
+    </div>
+
+    <!-- THREAD 5: PROTOCOLS -->
+    <div class="section-header" style="top:1550px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 5: Protocols of Elders of Zion &#9679;</div>
+
+    <div style="position:absolute;left:50%;top:1640px;transform:translateX(-50%);z-index:50;background:#fff3cd;border:3px solid #cc0000;padding:12px 24px;font-family:'Special Elite',cursive;color:#cc0000;font-size:13px;max-width:600px;text-align:center;border-radius:4px;box-shadow:4px 4px 12px rgba(0,0,0,0.5);">
+      <strong style="font-size:16px;">&#9888; DEFINITIVE FORGERY &#9888;</strong><br>
+      NOT a conspiracy theory. Manufactured by Russian Okhrana (secret police) c.1897–1902.<br>
+      Text plagiarized from Maurice Joly's 1864 satire. Proven by The Times of London 1921.
+    </div>
+
+    <div class="clipping" style="left:60px; top:1730px; width:240px; --rot:-2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title" style="color:#cc0000;">How the Forgery Was Made</div>
+      <div class="clipping-body">
+        <p><strong>Step 1:</strong> Russian Okhrana commissions document</p>
+        <p><strong>Step 2:</strong> Plagiarizes Joly's 1864 satire</p>
+        <p><strong>Step 3:</strong> Adds antisemitic framing</p>
+        <p><strong>Step 4:</strong> Circulates as "proof" of Jewish conspiracy</p>
+        <p><strong>Step 5:</strong> Kishinev Pogrom 1903</p>
+        <p><strong>Step 6:</strong> Cited in Mein Kampf</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="clipping" style="right:60px; top:1730px; width:220px; --rot:2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">Used to Justify Genocide</div>
+      <div class="clipping-body">
+        <p>1917 — Russian Revolution amplifies</p>
+        <p>1921 — The Times exposes plagiarism</p>
+        <p>1933 — Nazi Germany: 17 editions</p>
+        <p>1940s — Justifies the Holocaust</p>
+        <p style="margin-top:6px;color:#cc0000;font-weight:bold;">Most dangerous document in history.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="stamp stamp-forgery" style="top:2030px; left:50%; transform:translateX(-50%) rotate(-5deg);font-size:20px;padding:10px 24px;border-width:5px;">THIS IS NOT REAL</div>
+
+    <!-- THREAD 6: GOBEKLI TEPE -->
+    <div class="section-header" style="top:2080px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 6: Gobekli Tepe &amp; Anunnaki &#9679;</div>
+
+    <div class="photo-card" style="left:80px; top:2160px; --rot:-3deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:140px;">
+        <div class="photo-pin pin pin-green"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Gobekli_Tep_Temple.jpg/640px-Gobekli_Tep_Temple.jpg" alt="Gobekli Tepe" onerror="this.style.display='none'"/>
+        <div class="photo-name">GOBEKLITEPE</div>
+        <div class="photo-label">~9600 BCE — Turkey</div>
+      </div>
+    </div>
+
+    <div class="evidence-tag tag-a" style="top:2310px; left:80px; --rot:-2deg;">Tier A — FACT: 5,000 years BEFORE writing</div>
+    <div class="evidence-tag tag-c" style="top:2360px; left:80px; --rot:1deg;">Tier C — No "Lost Civilization" evidence</div>
+
+    <div class="sticky sticky-blue" style="right:60px; top:2160px; width:200px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">Anunnaki — FACT:</div>
+      <div class="sticky-body">They ARE in actual Sumerian texts as Mesopotamian gods. But NO text describes them as extraterrestrials.</div>
+    </div>
+
+    <div class="sticky sticky-pink" style="right:60px; top:2360px; width:200px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">X — Sitchin's Fiction:</div>
+      <div class="sticky-body">Zecharia Sitchin's 'translations' rejected by mainstream Assyriology. His '12th planet Nibiru' = his own invention.</div>
+    </div>
+
+    <!-- THREAD 7: WWI / LENIN -->
+    <div class="section-header" style="top:2480px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 7: WWI — German Gold to Lenin &#9679;</div>
+
+    <div class="stamp stamp-confirmed" style="top:2570px; left:60px; --rot:-6deg;">TIER D — CONFIRMED BY GERMAN RECORDS</div>
+
+    <div class="clipping" style="left:60px; top:2630px; width:240px; --rot:-1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">The December 1917 Plot</div>
+      <div class="clipping-body">
+        <p>The 'We December' letter exposed by US Press:</p>
+        <p style="margin-top:4px;font-weight:bold;">$40 MILLION in German gold</p>
+        <p>used to fund Lenin and the Bolsheviks to overthrow the Russian government.</p>
+        <p style="margin-top:4px;color:#1e8449;font-weight:bold;">Confirmed by German documents after WWI.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="clipping" style="right:60px; top:2630px; width:220px; --rot:2deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="clipping-title">Treaty of Versailles 1919</div>
+      <div class="clipping-body">
+        <p>Germany forced to accept SOLE war guilt</p>
+        <p>$33 BILLION in reparations</p>
+        <p>Economists (Keynes) warned: this will cause economic collapse and fuel extremism.</p>
+        <p style="margin-top:4px;font-weight:bold;">Rise of Hitler directly fueled by these conditions.</p>
+      </div>
+      <div class="clipping-tear"></div>
+    </div>
+
+    <div class="stamp stamp-follow" style="top:2870px; left:50%; transform:translateX(-50%) rotate(0deg);">Follow the Gold &#8594;</div>
+
+    <!-- THREAD 8: BILDERBERG -->
+    <div class="section-header" style="top:2940px; left:50%; transform:translateX(-50%); --rot:0deg;">&#9679; THREAD 8: Bilderberg Group &#9679;</div>
+
+    <div class="photo-card" style="left:80px; top:3020px; --rot:-3deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="photo-frame" style="width:120px;">
+        <div class="photo-pin pin pin-blue"></div>
+        <img class="photo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Prince_Bernhard_of_the_Netherlands_%281971%29.jpg/440px-Prince_Bernhard_of_the_Netherlands_%281971%29.jpg" alt="Prince Bernhard" onerror="this.style.display='none'"/>
+        <div class="photo-name">PRINCE BERNHARD</div>
+        <div class="photo-label">Bilderberg Founder 1954</div>
+      </div>
+    </div>
+
+    <div class="evidence-tag tag-b" style="top:3150px; left:80px; --rot:-2deg;">Tier B — Shapes Policy, Not Governance</div>
+    <div class="evidence-tag tag-x" style="top:3150px; right:80px; --rot:3deg;">Tier X — "Secret World Gov't" = False</div>
+
+    <div class="sticky sticky-yellow" style="left:220px; top:3030px; width:200px; --rot:1deg;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div class="sticky-title">What They Actually Do:</div>
+      <div class="sticky-body">Annual private conference. Participants: heads of state, CEOs, military. Discussions on geopolitics. NO legislative power. Agenda released publicly.</div>
+    </div>
+
+    <!-- MASTER VERDICT -->
+    <div class="section-header" style="top:3220px; left:50%; transform:translateX(-50%); --rot:0deg;background:#1a0a0a;border-color:#c0392b;">&#9679; <span>MASTER VERDICT — ALL 24 THREADS</span> &#9679;</div>
+
+    <div style="position:absolute;left:40px;top:3300px;width:300px;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="background:#1a3a1a;border:2px solid #2ecc71;padding:10px 14px;font-family:'Special Elite',cursive;">
+        <div style="font-size:11px;color:#2ecc71;letter-spacing:2px;margin-bottom:6px;">TIER A — CONFIRMED FACT</div>
+        <div style="font-size:10px;color:#aaa;line-height:1.8;">
+          Templars destroyed to erase debts<br>
+          Jesuits suppressed 1773<br>
+          Rothschilds dominated 19thC banking<br>
+          Jekyll Island private draft<br>
+          Akhenaten monotheism documented<br>
+          Nicaea political<br>
+          Masonic networking real<br>
+          BIS coordination genuine
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:370px;top:3300px;width:300px;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="background:#3a1a1a;border:2px solid #e63946;padding:10px 14px;font-family:'Special Elite',cursive;">
+        <div style="font-size:11px;color:#e63946;letter-spacing:2px;margin-bottom:6px;">TIER D — NOW CONFIRMED</div>
+        <div style="font-size:10px;color:#aaa;line-height:1.8;">
+          Templars = innocent victims<br>
+          Jekyll Island = genuinely secret<br>
+          German gold funded Lenin<br>
+          Jesuit suppression = political<br>
+          Vatican banking complicity<br>
+          Weimar hyperinflation by US banks
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:700px;top:3300px;width:300px;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="background:#3a3a1a;border:2px solid #f39c12;padding:10px 14px;font-family:'Special Elite',cursive;">
+        <div style="font-size:11px;color:#f39c12;letter-spacing:2px;margin-bottom:6px;">TIER B — CONTESTED</div>
+        <div style="font-size:10px;color:#aaa;line-height:1.8;">
+          Rothschild decline exaggerated<br>
+          Bilderberg shapes policy not governs<br>
+          Bohemian Grove elite networking<br>
+          Khazar genetics debated<br>
+          Fed 'conspiracy' overstated<br>
+          Masonic influence real vs controlling
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:1030px;top:3300px;width:300px;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="background:#2a1a1a;border:2px solid #e67e22;padding:10px 14px;font-family:'Special Elite',cursive;">
+        <div style="font-size:11px;color:#e67e22;letter-spacing:2px;margin-bottom:6px;">TIER C/X — FABRICATED</div>
+        <div style="font-size:10px;color:#aaa;line-height:1.8;">
+          Anunnaki=ETs (fiction)<br>
+          Sitchin translations rejected<br>
+          'Jesus was sun god' FALSE<br>
+          Pike 3-wars letter fabricated<br>
+          CERN=Baal fabricated<br>
+          Bohemian Grove=Moloch fabricated
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:40px;top:3550px;right:40px;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="background:#1a1500;border:3px solid #c9a84c;padding:16px 20px;font-family:'Special Elite',cursive;">
+        <div style="font-size:12px;color:#c9a84c;letter-spacing:2px;margin-bottom:10px;text-align:center;">—— KEY INVESTIGATION PATTERNS ——</div>
+        <div style="font-size:11px;color:#ddd;line-height:1.9;">
+          <strong style="color:#c9a84c;">Pattern #1:</strong> Chart conflates religious mythology with documented history — Egyptian gods, Sumerian gods, and historical figures connected by narrative, NOT evidence.<br>
+          <strong style="color:#c9a84c;">Pattern #2:</strong> Real persecutions (Templars, Jesuits, Rothschilds under Nazis) are ERASED — persecutors become conspirators, victims become villains.<br>
+          <strong style="color:#c9a84c;">Pattern #3:</strong> Antisemitic tropes woven throughout — Rothschild bloodlines, Khazar conspiracies, Protocols — presented as 'historical documentation.'<br>
+          <strong style="color:#c9a84c;">Pattern #4:</strong> Forgeries (Protocols, Pike Letter) presented as primary sources. Fabricated documents treated as evidence.
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;left:50%;top:3750px;transform:translateX(-50%);z-index:50;white-space:nowrap;" onmousedown="startDrag(event, this)" ontouchstart="startDrag(event,this)">
+      <div style="border:4px solid #cc0000;padding:14px 32px;text-align:center;background:#fff;">
+        <div style="font-family:'Rubik Vinyl',cursive;font-size:22px;color:#cc0000;letter-spacing:3px;">THE VERDICT</div>
+        <div style="font-family:'Special Elite',cursive;font-size:12px;color:#333;margin-top:8px;line-height:1.7;max-width:500px;">
+          This chart is NOT a reliable historical document.<br>
+          It presents as FACT what is actually contested, speculative, or fabricated.<br>
+          Its VALUE: showing how conspiracy thinking constructs narratives<br>
+          by connecting unrelated nodes across 10,000 years.
+        </div>
+      </div>
+    </div>
+
+    <div class="coffee-ring" style="width:120px;height:120px;top:620px;left:20px;"></div>
+    <div class="coffee-ring" style="width:80px;height:80px;bottom:200px;right:40px;"></div>
+    <div class="coffee-ring" style="width:60px;height:60px;top:1600px;right:200px;"></div>
+    <div class="forgery-watermark" style="top:1700px;left:200px;">FABRICATED FABRICATED FABRICATED FABRICATED FABRICATED</div>
+
+  </div>
+</div>
+
+<script>
+let dragging = null;
+let dragOffX = 0, dragOffY = 0;
+
+function startDrag(e, el) {
+  e.preventDefault();
+  if (dragging) dragging.style.zIndex = '10';
+  dragging = el;
+  const rect = el.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  dragOffX = clientX - rect.left;
+  dragOffY = clientY - rect.top;
+  const z = el.classList.contains('section-header') ? '50' : '100';
+  el.style.zIndex = z;
+}
+
+document.addEventListener('mousemove', function(e) {
+  if (!dragging) return;
+  const board = document.getElementById('board');
+  const boardRect = board.getBoundingClientRect();
+  const sx = window.scrollX || window.pageXOffset;
+  const sy = window.scrollY || window.pageYOffset;
+  var newLeft = e.clientX - boardRect.left - dragOffX + sx;
+  var newTop = e.clientY - boardRect.top - dragOffY + sy;
+  dragging.style.left = newLeft + 'px';
+  dragging.style.top = newTop + 'px';
+  dragging.style.right = 'auto';
+  dragging.style.bottom = 'auto';
+});
+
+document.addEventListener('touchmove', function(e) {
+  if (!dragging) return;
+  e.preventDefault();
+  var touch = e.touches[0];
+  const board = document.getElementById('board');
+  const boardRect = board.getBoundingClientRect();
+  const sx = window.scrollX || window.pageXOffset;
+  const sy = window.scrollY || window.pageYOffset;
+  dragging.style.left = (touch.clientX - boardRect.left - dragOffX + sx) + 'px';
+  dragging.style.top = (touch.clientY - boardRect.top - dragOffY + sy) + 'px';
+  dragging.style.right = 'auto';
+}, {passive: false});
+
+document.addEventListener('mouseup', function() {
+  if (dragging) { dragging.style.zIndex = '10'; dragging = null; }
+});
+document.addEventListener('touchend', function() {
+  if (dragging) { dragging.style.zIndex = '10'; dragging = null; }
+});
+</script>
+
+</body>
+</html>
